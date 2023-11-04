@@ -6,37 +6,20 @@ import redundancy_svd as rsvd
 
 from sklearn.preprocessing import LabelEncoder # for variables encoding
 
-# File paths
-file_data_path = './src/data/KDDTrain.txt' # data file path
+# Load parameters
+def load_config(config_file_path = './src/config/cnf_sv.csv'):
+    # Número de Muestras : 10000
+    # Top-K de Relevancia : 30
+    # Número de Vectores Singulares : 20
+    # Clase Normal (s/n) : 1
+    # Clase DOS (s/n) : 0
+    # Clase Probe (s/n) : 1
 
-# Class mapping dictionary
-class_mapping = {
-    'normal': 1,
-    'neptune': 2,
-    'teardrop': 2,
-    'smurf': 2,
-    'pod': 2,
-    'back': 2,
-    'land': 2,
-    'apache2': 2,
-    'processtable': 2,
-    'mailbomb': 2,
-    'udpstorm': 2,
-    'ipsweep': 3,
-    'portsweep': 3,
-    'nmap': 3,
-    'satan': 3,
-    'saint': 3,
-    'mscan': 3
-}
-
-# Load Parameters
-def load_config():
-    params = []
+    params = np.loadtxt(fname=config_file_path)  
     return params
 
 # Load data
-def load_data():
+def load_data(file_data_path = './src/data/KDDTrain.txt'):
     data = []
     
     # Read data file
@@ -45,6 +28,8 @@ def load_data():
             fields = line.strip().split(',')
             data.append(fields)
     data = np.array(data)
+
+    data = data[:, :-1] # drop the last column
 
     # Convert no-numeric vars to numeric
     for i in range(1, 4): # for each no-numerical variable
@@ -56,18 +41,75 @@ def load_data():
         data[:, i] = no_numerical_var_encoded # replace the no-numerical variable with the encoded one
 
     # Convert the class labels to numeric
-    class_labels = np.array(data)[:, 41] # get the class labels
-    class_labels = np.array([class_mapping.get(label, label) for label in class_labels]) # encode the class labels
+    # Class mapping dictionary
+    class_mapping = {
+        'normal': 1,
+        'neptune': 2,
+        'teardrop': 2,
+        'smurf': 2,
+        'pod': 2,
+        'back': 2,
+        'land': 2,
+        'apache2': 2,
+        'processtable': 2,
+        'mailbomb': 2,
+        'udpstorm': 2,
+        'ipsweep': 3,
+        'portsweep': 3,
+        'nmap': 3,
+        'satan': 3,
+        'saint': 3,
+        'mscan': 3
+    }
 
+    class_labels = np.array(data)[:, 41] # get the class labels
+    class_labels = np.array([class_mapping.get(label, -1) for label in class_labels], dtype=int) # encode the class labels
+    
     data[:, 41] = class_labels # replace the class labels with the encoded ones
+
+    # Normalize each column
+    # X = (X - min)/(max - min)*(b - a) + a
+    # a = 0.1, b = 0.99
+    #a = 0.1
+    #b = 0.99
+    #
+    #for i in range(0, 41): # for each column
+    #    column = np.array(data)[:, i]
+    #    column = column.astype(float)
+    #    max = np.max(column) + 1 # bins max + 1
+    #    min = np.min(column)
+    #    column = (column - min)/(max - min)*(b - a) + a
+    #    data[:, i] = column
 
     return data
 
-# selecting variables
+# Selecting variables
 def select_vars(X, params):
-	return
+    # Reorder the data randomly
+    np.random.shuffle(X)
 
-#save results
+    # Initialize X, Y
+    Y = X[:, -1] # classes
+    X = X[:, :-1] # data
+
+    X = X.astype(float)
+    Y = Y.astype(float)
+
+    # (Step 1, 2 and 3) Select most relevant variables with information gain
+    idx = np.arange(41)
+    gain = []
+    
+    for attribute in range(0, 41):
+        gain.append(ig.inform_gain(X[:, attribute], Y)) # calculate the information gain of each variable
+
+    idx = np.array(idx)[np.argsort(gain)[::-1]] # order the variables by information gain (descending)
+
+    # (Step 4) Drop redundant variables with SVD
+    V = rsvd.svd_data(X, params)
+
+    return [gain, idx, V]
+
+# Save results
 def save_results():
     return
 
@@ -77,12 +119,7 @@ def main():
     params = load_config()
     X = load_data()
 
-    print(X[0])
-    print(X[1])
-    print(X[2])
-    print(X[17])
-
-    #[gain, idx, V] = select_vars(X, params)
+    [gain, idx, V] = select_vars(X, params)
     #save_results(gain, idx, V)
        
 if __name__ == '__main__':
