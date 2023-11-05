@@ -29,8 +29,6 @@ def svd_data(X, params):
 
     U, S, V = np.linalg.svd(Y)
     
-    Vt = Vt[:,:int(params[2])] # Number of singular vectors to keep
-
-    print(V)
+    V = V[:,:int(params[2])] # Number of singular vectors to keep
 
     return V
