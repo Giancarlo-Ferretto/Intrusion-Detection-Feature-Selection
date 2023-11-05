@@ -85,8 +85,6 @@ def load_data(file_data_path = './src/data/KDDTrain.txt'):
 
 # Selecting variables
 def select_vars(X, params):
-    # Reorder the data randomly
-    np.random.shuffle(X)
     # Randomly select "params[0]" samples
     samples = int(params[0])
     X = X[np.random.choice(X.shape[0], samples, replace=False)]
@@ -113,7 +111,10 @@ def select_vars(X, params):
     return [gain, idx, V]
 
 # Save results
-def save_results():
+def save_results(gain, idx, V):
+    np.savetxt("gain_values.csv", gain, delimiter=",")
+    np.savetxt("gain_idx.csv", idx, delimiter=",")
+    np.savetxt("filter_v.csv", V, delimiter=",")
     return
 
 #-------------------------------------------------------------------
@@ -123,7 +124,7 @@ def main():
     X = load_data()
 
     [gain, idx, V] = select_vars(X, params)
-    #save_results(gain, idx, V)
+    save_results(gain, idx, V)
        
 if __name__ == '__main__':
 	 main()
