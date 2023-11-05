@@ -87,6 +87,9 @@ def load_data(file_data_path = './src/data/KDDTrain.txt'):
 def select_vars(X, params):
     # Reorder the data randomly
     np.random.shuffle(X)
+    # Randomly select "params[0]" samples
+    samples = int(params[0])
+    X = X[np.random.choice(X.shape[0], samples, replace=False)]
 
     # Initialize X, Y
     Y = X[:, -1] # classes
