@@ -7,7 +7,7 @@ import redundancy_svd as rsvd
 from sklearn.preprocessing import LabelEncoder # for variables encoding
 
 # Load parameters
-def load_config(config_file_path = './src/config/cnf_sv.csv'):
+def load_config(config_file_path = './src/cnf_sv.csv'):
     # Número de Muestras : 10000
     # Top-K de Relevancia : 30
     # Número de Vectores Singulares : 20
@@ -19,7 +19,7 @@ def load_config(config_file_path = './src/config/cnf_sv.csv'):
     return params
 
 # Load data
-def load_data(file_data_path = './src/data/KDDTrain.txt'):
+def load_data(file_data_path = './src/KDDTrain.txt', idx_samples_path = './src/idx_samples.csv'):
     data = []
     
     # Read data file
@@ -67,19 +67,24 @@ def load_data(file_data_path = './src/data/KDDTrain.txt'):
     
     data[:, 41] = class_labels # replace the class labels with the encoded ones
 
+    # Load the indexes of the samples to be used
+    idx = np.genfromtxt(idx_samples_path, dtype=int)
+    idx = np.asarray(idx)-1
+    data = data[idx, :]
+
     # Normalize each column
     # X = (X - min)/(max - min)*(b - a) + a
     # a = 0.1, b = 0.99
-    #a = 0.1
-    #b = 0.99
-    #
-    #for i in range(0, 41): # for each column
-    #    column = np.array(data)[:, i]
-    #    column = column.astype(float)
-    #    max = np.max(column) + 1 # bins max + 1
-    #    min = np.min(column)
-    #    column = (column - min)/(max - min)*(b - a) + a
-    #    data[:, i] = column
+    a = 0.1
+    b = 0.99
+
+    for i in range(0, 41): # for each column
+        column = np.array(data)[:, i]
+        column = column.astype(float)
+        max = np.max(column) + 1
+        min = np.min(column)
+        column = (column - min)/(max - min)*(b - a) + a
+        data[:, i] = column
 
     return data
 
@@ -121,16 +126,17 @@ def select_vars(X, params):
     for attribute in range(0, 41):
         gain.append(ig.inform_gain(X[:, attribute], Y)) # calculate the information gain of each variable
 
-    idx = np.array(idx)[np.argsort(gain)[::-1]] # order the variables by information gain (descending)
-
-    # (Step 4) Descompose of Singular Values (SVD)
-    # (1) SVD
-    V = rsvd.svd_data(X, params)
-
     # Select the Top-K singular values
     # (1) k <= K
     # (2) X = X * V(:, 1:k)
     # (3) X e R^(N x k)
+
+    idx = np.array(idx)[np.argsort(gain)[::-1]] # order the variables by information gain (descending)
+    X = X[:, idx] # order the data by information gain (descending)
+
+    # (Step 4) Descompose of Singular Values (SVD)
+    # (1) SVD
+    V = rsvd.svd_data(X, params)
 
     return [gain, idx, V]
 
