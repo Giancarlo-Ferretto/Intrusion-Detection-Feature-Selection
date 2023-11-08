@@ -2,7 +2,7 @@
 
 import numpy as np   
 
-# normalization of the data
+# Normalization of the data
 def norm_data(X):
     # Y = X/sqrt(N-1)
     X = X/np.sqrt(np.shape(X)[0] - 1)
@@ -27,8 +27,8 @@ def svd_data(X, params):
     # V = left ortogonal matrix of eigenvectors
     # S = diagonal matrix of eigenvalues
 
-    U, S, V = np.linalg.svd(Y)
-    
+    U, S, V = np.linalg.svd(Y, full_matrices=False)
+
     V = V[:,:int(params[2])] # Number of singular vectors to keep
 
     return V

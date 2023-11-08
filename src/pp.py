@@ -11,9 +11,9 @@ def load_config(config_file_path = './src/config/cnf_sv.csv'):
     # Número de Muestras : 10000
     # Top-K de Relevancia : 30
     # Número de Vectores Singulares : 20
-    # Clase Normal (s/n) : 1
-    # Clase DOS (s/n) : 0
-    # Clase Probe (s/n) : 1
+    # Clase 1 Normal (s/n) : 1
+    # Clase 2 DOS (s/n) : 0
+    # Clase 3 Probe (s/n) : 1
 
     params = np.loadtxt(fname=config_file_path)  
     return params
@@ -85,6 +85,24 @@ def load_data(file_data_path = './src/data/KDDTrain.txt'):
 
 # Selecting variables
 def select_vars(X, params):
+    # If params[3] is zero, remove class 1 samples
+    if params[3] == 0:
+        for row in range(0, X.shape[0]):
+            if X[row, 41] == 1:
+                X = np.delete(X, row, 0)
+
+    # If params[4] is zero, remove class 2 samples
+    if params[4] == 0:
+        for row in range(0, X.shape[0]):
+            if X[row, 41] == 2:
+                X = np.delete(X, row, 0)
+
+    # If params[5] is zero, remove class 3 samples
+    if params[5] == 0:
+        for row in range(0, X.shape[0]):
+            if X[row, 41] == 3:
+                X = np.delete(X, row, 0)
+
     # Randomly select "params[0]" samples
     samples = int(params[0])
     X = X[np.random.choice(X.shape[0], samples, replace=False)]
@@ -105,8 +123,14 @@ def select_vars(X, params):
 
     idx = np.array(idx)[np.argsort(gain)[::-1]] # order the variables by information gain (descending)
 
-    # (Step 4) Drop redundant variables with SVD
+    # (Step 4) Descompose of Singular Values (SVD)
+    # (1) SVD
     V = rsvd.svd_data(X, params)
+
+    # Select the Top-K singular values
+    # (1) k <= K
+    # (2) X = X * V(:, 1:k)
+    # (3) X e R^(N x k)
 
     return [gain, idx, V]
 

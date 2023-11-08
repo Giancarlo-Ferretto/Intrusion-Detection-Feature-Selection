@@ -35,4 +35,5 @@ def entropy_xy(X, Y):
 
 # Entropy formula
 def entropy(p):
+    # I(d1j, d2j, ..., dnj) = -sum(p * log2(p)
     return -np.sum(p * np.log2(p))
